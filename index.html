@@ -415,6 +415,25 @@
         return words.includes(t) || (t.split(' ').length <= 3 && t.length < 30 && !/[.!?]$/.test(t));
     }
 
+    function setUploadUI(filename, count) {
+        document.getElementById('upload-drop').classList.add('loaded');
+        document.getElementById('up-icon').textContent = '✅';
+        document.getElementById('up-main').textContent = filename;
+        document.getElementById('badge-wrap').innerHTML =
+            `<span class="posts-badge">✓ ${count} posts</span>`;
+    }
+
+    // Restore saved posts on load
+    (() => {
+        const saved = localStorage.getItem('li_gen_posts');
+        const savedMeta = localStorage.getItem('li_gen_posts_meta');
+        if (saved && savedMeta) {
+            posts = JSON.parse(saved);
+            const { filename } = JSON.parse(savedMeta);
+            setUploadUI(filename, posts.length);
+        }
+    })();
+
     function handleUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -424,11 +443,10 @@
             if (parsed.length > 0 && looksLikeHeader(parsed[0])) parsed = parsed.slice(1);
             posts = parsed;
 
-            document.getElementById('upload-drop').classList.add('loaded');
-            document.getElementById('up-icon').textContent = '✅';
-            document.getElementById('up-main').textContent = file.name;
-            document.getElementById('badge-wrap').innerHTML =
-                `<span class="posts-badge">✓ ${posts.length} posts</span>`;
+            localStorage.setItem('li_gen_posts', JSON.stringify(posts));
+            localStorage.setItem('li_gen_posts_meta', JSON.stringify({ filename: file.name }));
+
+            setUploadUI(file.name, posts.length);
         };
         reader.readAsText(file);
     }
