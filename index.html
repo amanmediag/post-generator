@@ -373,6 +373,23 @@
         }
         .csv-download-btn:hover { background: #e5e7eb; }
 
+        /* AI warning */
+        .ai-warning {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 11px 14px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #92400e;
+            line-height: 1.5;
+        }
+        .ai-warning-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+        .ai-warning strong { font-weight: 600; }
+
         /* API key tooltip */
         .key-tooltip-wrap {
             position: relative;
@@ -548,6 +565,10 @@
         </div>
         <div class="output-divider"></div>
         <div class="output-text" id="output-text"></div>
+        <div class="ai-warning">
+            <span class="ai-warning-icon">⚠️</span>
+            <span><strong>This is a first draft, not a final post.</strong> AI output almost always contains AI-isms — phrases that sound unnatural, over-polished, or generic. Always read through, rewrite in your own words, and edit before publishing.</span>
+        </div>
     </div>
 
 </div>
