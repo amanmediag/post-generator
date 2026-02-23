@@ -390,6 +390,13 @@
         .ai-warning-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
         .ai-warning strong { font-weight: 600; }
 
+        .cost-line {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 10px;
+            text-align: right;
+        }
+
         .field-explainer {
             font-size: 12px;
             color: #6b7280;
@@ -498,9 +505,9 @@
             <div class="field">
                 <label for="model">Model</label>
                 <select id="model">
-                    <option value="claude-sonnet-4-6">Sonnet 4.6 — faster</option>
-                    <option value="claude-opus-4-6">Opus 4.6 — best quality</option>
-                    <option value="claude-haiku-4-5-20251001">Haiku 4.5 — fastest</option>
+                    <option value="claude-sonnet-4-6">Sonnet 4.6 — faster (~$0.02/post)</option>
+                    <option value="claude-opus-4-6">Opus 4.6 — best quality (~$0.10/post)</option>
+                    <option value="claude-haiku-4-5-20251001">Haiku 4.5 — fastest (~$0.005/post)</option>
                 </select>
             </div>
         </div>
@@ -573,6 +580,7 @@
         </div>
         <div class="output-divider"></div>
         <div class="output-text" id="output-text"></div>
+        <div class="cost-line" id="cost-line"></div>
         <div class="ai-warning">
             <span class="ai-warning-icon">⚠️</span>
             <span><strong>This is a first draft, not a final post.</strong> AI output almost always contains AI-isms — phrases that sound unnatural, over-polished, or generic. Always read through, rewrite in your own words, and edit before publishing.</span>
@@ -583,6 +591,13 @@
 <script>
     let posts = [];
     let generating = false;
+
+    // Pricing per million tokens (input / output)
+    const PRICING = {
+        'claude-opus-4-6':           { input: 15,   output: 75  },
+        'claude-sonnet-4-6':         { input: 3,    output: 15  },
+        'claude-haiku-4-5-20251001': { input: 0.80, output: 4   },
+    };
 
     // Restore saved API key
     const keyInput = document.getElementById('api-key');
@@ -808,6 +823,8 @@ Return ONLY the LinkedIn post text, ready to copy and paste. Write as this perso
             const dec = new TextDecoder();
             let buf = '';
             let full = '';
+            let inputTokens = 0;
+            let outputTokens = 0;
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -823,12 +840,15 @@ Return ONLY the LinkedIn post text, ready to copy and paste. Write as this perso
                     if (raw === '[DONE]') continue;
                     try {
                         const evt = JSON.parse(raw);
-                        if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+                        if (evt.type === 'message_start') {
+                            inputTokens = evt.message?.usage?.input_tokens || 0;
+                        } else if (evt.type === 'message_delta') {
+                            outputTokens = evt.usage?.output_tokens || 0;
+                        } else if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
                             full += evt.delta.text;
                             outputText.textContent = full;
                             outputText.appendChild(cursor);
                             updateCharCount(full.length);
-                            // Grow progress bar as text arrives
                             const pct = Math.min(95, 65 + (full.length / 1400) * 30);
                             setProgress(pct, 'Writing...');
                         }
@@ -840,6 +860,7 @@ Return ONLY the LinkedIn post text, ready to copy and paste. Write as this perso
             outputText.textContent = full;
             updateCharCount(full.length);
             setProgress(100, 'Done ✓');
+            showCost(model, inputTokens, outputTokens);
             setTimeout(hideProgress, 800);
 
         } catch (err) {
@@ -851,6 +872,14 @@ Return ONLY the LinkedIn post text, ready to copy and paste. Write as this perso
             document.getElementById('gen-btn').disabled = false;
             document.getElementById('retry-btn').disabled = false;
         }
+    }
+
+    function showCost(model, inputTokens, outputTokens) {
+        const p = PRICING[model];
+        if (!p || (!inputTokens && !outputTokens)) return;
+        const cost = (inputTokens * p.input + outputTokens * p.output) / 1_000_000;
+        const el = document.getElementById('cost-line');
+        el.textContent = `Cost: $${cost.toFixed(4)} · ${inputTokens.toLocaleString()} input tokens · ${outputTokens.toLocaleString()} output tokens`;
     }
 
     function toggleHelp() {
