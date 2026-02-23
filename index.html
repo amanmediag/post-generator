@@ -270,6 +270,108 @@
             color: #9ca3af;
             margin-top: 6px;
         }
+
+        /* CSV help */
+        .csv-help {
+            margin-top: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 13px;
+        }
+        .csv-help-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 12px;
+            cursor: pointer;
+            color: #6b7280;
+            font-weight: 500;
+            background: #f9fafb;
+            user-select: none;
+        }
+        .csv-help-header:hover { color: #374151; background: #f3f4f6; }
+        .csv-help-arrow { font-size: 11px; transition: transform 0.2s; }
+        .csv-help-arrow.open { transform: rotate(90deg); }
+        .csv-help-body {
+            display: none;
+            padding: 14px 14px 12px;
+            border-top: 1px solid #e5e7eb;
+            background: #fff;
+        }
+        .csv-help-body p { color: #374151; margin-bottom: 12px; line-height: 1.5; }
+        .csv-help-body strong { font-weight: 600; }
+
+        .csv-preview {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+        .csv-preview-header {
+            background: #f3f4f6;
+            padding: 5px 10px;
+            font-weight: 700;
+            color: #6b7280;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .csv-preview-row {
+            padding: 6px 10px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .csv-preview-more {
+            padding: 5px 10px;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .csv-tips {
+            list-style: none;
+            margin-bottom: 12px;
+        }
+        .csv-tips li {
+            color: #6b7280;
+            padding: 3px 0 3px 16px;
+            position: relative;
+            line-height: 1.5;
+        }
+        .csv-tips li::before {
+            content: '·';
+            position: absolute;
+            left: 5px;
+            color: #9ca3af;
+        }
+        .csv-tips code {
+            background: #f3f4f6;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #374151;
+        }
+
+        .csv-download-btn {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            color: #374151;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+        .csv-download-btn:hover { background: #e5e7eb; }
     </style>
 </head>
 <body>
@@ -315,7 +417,32 @@
                 <input type="file" id="csv-file" accept=".csv,.txt" onchange="handleUpload(event)">
                 <div class="up-icon" id="up-icon">📂</div>
                 <div class="up-main" id="up-main">Click to upload CSV</div>
-                <div class="up-sub">One post per row · CSV or plain text</div>
+                <div class="up-sub">One post per row · uploads persist until you replace them</div>
+            </div>
+            <div class="csv-help">
+                <div class="csv-help-header" onclick="toggleHelp()">
+                    <span>How to format your CSV</span>
+                    <span class="csv-help-arrow" id="help-arrow">▸</span>
+                </div>
+                <div class="csv-help-body" id="help-body">
+                    <p>Create a spreadsheet with a single column of your LinkedIn posts — one post per row. Export it as a <strong>.csv</strong> file.</p>
+                    <div class="csv-preview">
+                        <div class="csv-preview-header">
+                            <span>post_text</span>
+                        </div>
+                        <div class="csv-preview-row">I spent 3 years building the wrong product. Here's what I learned...</div>
+                        <div class="csv-preview-row">Most people think cold outreach doesn't work. They're wrong. It just requires a different approach...</div>
+                        <div class="csv-preview-row">We closed our biggest deal last month — $180k ARR. The entire sales process took 9 days...</div>
+                        <div class="csv-preview-more">+ your posts below</div>
+                    </div>
+                    <ul class="csv-tips">
+                        <li>The first row can be a header (e.g. <code>post_text</code>) — it'll be skipped automatically</li>
+                        <li>Posts with commas or line breaks are fine as long as they're wrapped in quotes</li>
+                        <li>More posts = better voice matching. Aim for 30+ if you have them</li>
+                        <li>In Google Sheets: <strong>File → Download → CSV</strong></li>
+                    </ul>
+                    <a class="csv-download-btn" onclick="downloadExample()">↓ Download example CSV</a>
+                </div>
             </div>
         </div>
     </div>
@@ -625,6 +752,29 @@ Return ONLY the LinkedIn post text, ready to copy and paste. Write as this perso
             document.getElementById('gen-btn').disabled = false;
             document.getElementById('retry-btn').disabled = false;
         }
+    }
+
+    function toggleHelp() {
+        const body = document.getElementById('help-body');
+        const arrow = document.getElementById('help-arrow');
+        const open = body.style.display === 'block';
+        body.style.display = open ? 'none' : 'block';
+        arrow.classList.toggle('open', !open);
+    }
+
+    function downloadExample() {
+        const csv = `post_text
+"I spent 3 years building the wrong product. Here's what I learned about finding product-market fit the hard way..."
+"Most people think cold outreach doesn't work. They're wrong. It just requires a completely different approach than what you've been taught..."
+"We closed our biggest deal last month — $180k ARR. The entire sales process took 9 days. Here's exactly how we did it..."
+"Hiring your first 10 people is the most important thing you'll do as a founder. I've made every mistake possible. Here's what I'd do differently..."
+"Everyone talks about scaling. Nobody talks about what breaks when you do. Last year we went from $1M to $4M ARR and almost destroyed the company in the process..."`;
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'example-posts.csv';
+        a.click();
     }
 
     async function copyPost() {
