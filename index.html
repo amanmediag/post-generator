@@ -390,6 +390,13 @@
         .ai-warning-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
         .ai-warning strong { font-weight: 600; }
 
+        .field-explainer {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
         /* API key tooltip */
         .key-tooltip-wrap {
             position: relative;
@@ -500,6 +507,7 @@
 
         <div class="field">
             <label>Past Posts <span id="badge-wrap"></span></label>
+            <p class="field-explainer">Upload posts you've written to improve tone of voice and add context. This acts as your brain — the tool pulls from it to match how you write and think.</p>
             <div class="upload-drop" id="upload-drop">
                 <input type="file" id="csv-file" accept=".csv,.txt" onchange="handleUpload(event)">
                 <div class="up-icon" id="up-icon">📂</div>
