@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Post Generator</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f3f4f6;
+            color: #111827;
+            min-height: 100vh;
+            padding: 36px 20px 72px;
+        }
+
+        .container { max-width: 680px; margin: 0 auto; }
+
+        /* Header */
+        .header { margin-bottom: 28px; }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0a66c2;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+        .header p { color: #6b7280; font-size: 14px; margin-top: 5px; }
+
+        /* Cards */
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            padding: 20px 24px;
+            margin-bottom: 12px;
+        }
+
+        .card-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: #9ca3af;
+            margin-bottom: 16px;
+        }
+
+        /* Fields */
+        .field { margin-bottom: 16px; }
+        .field:last-child { margin-bottom: 0; }
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 520px) { .field-row { grid-template-columns: 1fr; } }
+
+        input[type="password"],
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            font-family: inherit;
+            font-size: 14px;
+            color: #111827;
+            background: #f9fafb;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 9px 12px;
+            transition: border-color 0.15s, background 0.15s;
+            outline: none;
+        }
+        input[type="password"]:focus,
+        input[type="text"]:focus,
+        select:focus,
+        textarea:focus { border-color: #0a66c2; background: #fff; }
+
+        textarea { resize: vertical; line-height: 1.55; }
+        select { cursor: pointer; }
+
+        .input-wrap { position: relative; }
+        .input-wrap input { padding-right: 58px; }
+        .show-hide {
+            position: absolute;
+            right: 0; top: 0; bottom: 0;
+            padding: 0 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 500;
+            font-family: inherit;
+        }
+        .show-hide:hover { color: #374151; }
+
+        .key-saved {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #16a34a;
+            margin-top: 5px;
+        }
+
+        /* Upload */
+        .upload-drop {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.15s;
+            background: #f9fafb;
+        }
+        .upload-drop:hover { border-color: #0a66c2; background: #eff6ff; }
+        .upload-drop.loaded { border-color: #16a34a; background: #f0fdf4; }
+        .upload-drop input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        .up-icon { font-size: 20px; margin-bottom: 4px; }
+        .up-main { font-size: 13px; font-weight: 500; color: #374151; }
+        .up-sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+        .posts-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 600;
+            background: #dcfce7;
+            color: #166534;
+            border-radius: 999px;
+            padding: 2px 8px;
+            margin-left: 6px;
+        }
+
+        /* Button */
+        .btn-gen {
+            width: 100%;
+            padding: 12px;
+            background: #0a66c2;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            margin-top: 4px;
+        }
+        .btn-gen:hover:not(:disabled) { background: #004182; }
+        .btn-gen:active:not(:disabled) { transform: scale(0.99); }
+        .btn-gen:disabled { background: #d1d5db; color: #9ca3af; cursor: not-allowed; }
+
+        /* Error */
+        .error-box {
+            display: none;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #b91c1c;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .error-box.show { display: block; }
+
+        /* Progress */
+        .progress-card { display: none; }
+        .progress-card.show { display: block; }
+        .progress-track {
+            height: 5px;
+            background: #e5e7eb;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0a66c2 0%, #38bdf8 100%);
+            border-radius: 999px;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        .progress-status { font-size: 13px; color: #6b7280; text-align: center; }
+
+        /* Output */
+        .output-card { display: none; }
+        .output-card.show { display: block; }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .output-actions { display: flex; align-items: center; gap: 8px; }
+
+        .char-count { font-size: 12px; color: #9ca3af; }
+        .char-count.over { color: #dc2626; font-weight: 600; }
+
+        .btn-sm {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-copy {
+            background: #0a66c2;
+            color: white;
+            border: 1.5px solid #0a66c2;
+        }
+        .btn-copy:hover { background: #004182; border-color: #004182; }
+        .btn-copy.copied { background: #16a34a; border-color: #16a34a; }
+
+        .btn-retry {
+            background: white;
+            color: #374151;
+            border: 1.5px solid #d1d5db;
+        }
+        .btn-retry:hover { border-color: #9ca3af; }
+        .btn-retry:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .output-divider { height: 1px; background: #f3f4f6; margin-bottom: 16px; }
+
+        .output-text {
+            font-size: 15px;
+            line-height: 1.65;
+            white-space: pre-wrap;
+            color: #111827;
+            min-height: 80px;
+        }
+
+        /* Streaming cursor */
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: #0a66c2;
+            margin-left: 1px;
+            vertical-align: text-bottom;
+            animation: blink 0.75s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .privacy-note {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#0a66c2" style="flex-shrink:0">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+            Post Generator
+        </h1>
+        <p>Upload your past posts, describe a topic — get a post in your voice.</p>
+    </div>
+
+    <!-- Config -->
+    <div class="card">
+        <div class="card-label">Setup</div>
+        <div class="field-row">
+            <div class="field">
+                <label for="api-key">Claude API Key</label>
+                <div class="input-wrap">
+                    <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+                    <button class="show-hide" type="button" onclick="toggleKey(this)">Show</button>
+                </div>
+                <div id="key-status"></div>
+                <div class="privacy-note">Saved in your browser only. Never sent anywhere except Anthropic.</div>
+            </div>
+
+            <div class="field">
+                <label for="model">Model</label>
+                <select id="model">
+                    <option value="claude-sonnet-4-6">Sonnet 4.6 — faster</option>
+                    <option value="claude-opus-4-6">Opus 4.6 — best quality</option>
+                    <option value="claude-haiku-4-5-20251001">Haiku 4.5 — fastest</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Past Posts <span id="badge-wrap"></span></label>
+            <div class="upload-drop" id="upload-drop">
+                <input type="file" id="csv-file" accept=".csv,.txt" onchange="handleUpload(event)">
+                <div class="up-icon" id="up-icon">📂</div>
+                <div class="up-main" id="up-main">Click to upload CSV</div>
+                <div class="up-sub">One post per row · CSV or plain text</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Idea Input -->
+    <div class="card">
+        <div class="card-label">Your Idea</div>
+        <div class="field">
+            <label for="topic">What do you want to write about?</label>
+            <textarea id="topic" rows="6" placeholder="Give as much detail as you can — a story, a result, a lesson, or just a rough direction. The more specific you are, the more authentic the post will be."></textarea>
+        </div>
+        <button class="btn-gen" id="gen-btn" type="button" onclick="generate()">Generate Post</button>
+        <div class="error-box" id="error-box"></div>
+    </div>
+
+    <!-- Progress -->
+    <div class="card progress-card" id="progress-card">
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-status" id="progress-status">Analyzing your writing style...</div>
+    </div>
+
+    <!-- Output -->
+    <div class="card output-card" id="output-card">
+        <div class="output-header">
+            <div class="card-label" style="margin-bottom:0">Generated Post</div>
+            <div class="output-actions">
+                <span class="char-count" id="char-count"></span>
+                <button class="btn-sm btn-retry" id="retry-btn" type="button" onclick="generate()" disabled>↺ Retry</button>
+                <button class="btn-sm btn-copy" id="copy-btn" type="button" onclick="copyPost()">Copy</button>
+            </div>
+        </div>
+        <div class="output-divider"></div>
+        <div class="output-text" id="output-text"></div>
+    </div>
+
+</div>
+<script>
+    let posts = [];
+    let generating = false;
+
+    // Restore saved API key
+    const keyInput = document.getElementById('api-key');
+    (() => {
+        const saved = localStorage.getItem('li_gen_key');
+        if (saved) { keyInput.value = saved; showKeySaved(); }
+    })();
+
+    keyInput.addEventListener('blur', () => {
+        const v = keyInput.value.trim();
+        if (v) { localStorage.setItem('li_gen_key', v); showKeySaved(); }
+        else { localStorage.removeItem('li_gen_key'); document.getElementById('key-status').innerHTML = ''; }
+    });
+
+    function showKeySaved() {
+        document.getElementById('key-status').innerHTML = '<span class="key-saved">✓ Saved</span>';
+    }
+
+    function toggleKey(btn) {
+        keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
+        btn.textContent = keyInput.type === 'password' ? 'Show' : 'Hide';
+    }
+
+    // CSV parser — handles quoted fields, multi-column (uses first col only)
+    function parseCSV(text) {
+        const rows = [];
+        let cell = '';
+        let inQuote = false;
+        let pastFirst = false;
+
+        for (let i = 0; i <= text.length; i++) {
+            const c = i < text.length ? text[i] : '\n';
+            const next = i + 1 < text.length ? text[i + 1] : '';
+
+            if (c === '"') {
+                if (inQuote && next === '"') { if (!pastFirst) cell += '"'; i++; }
+                else inQuote = !inQuote;
+            } else if (c === ',' && !inQuote) {
+                pastFirst = true;
+            } else if ((c === '\n' || (c === '\r' && next !== '\n')) && !inQuote) {
+                const t = cell.trim();
+                if (t.length > 20) rows.push(t);
+                cell = ''; pastFirst = false;
+            } else if (c === '\r') {
+                // skip \r in \r\n
+            } else if (!pastFirst) {
+                cell += c;
+            }
+        }
+        return rows;
+    }
+
+    function looksLikeHeader(s) {
+        const t = s.toLowerCase().trim();
+        const words = ['post', 'content', 'text', 'body', 'message', 'caption', 'copy', 'posts', 'post text'];
+        return words.includes(t) || (t.split(' ').length <= 3 && t.length < 30 && !/[.!?]$/.test(t));
+    }
+
+    function handleUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = evt => {
+            let parsed = parseCSV(evt.target.result);
+            if (parsed.length > 0 && looksLikeHeader(parsed[0])) parsed = parsed.slice(1);
+            posts = parsed;
+
+            document.getElementById('upload-drop').classList.add('loaded');
+            document.getElementById('up-icon').textContent = '✅';
+            document.getElementById('up-main').textContent = file.name;
+            document.getElementById('badge-wrap').innerHTML =
+                `<span class="posts-badge">✓ ${posts.length} posts</span>`;
+        };
+        reader.readAsText(file);
+    }
+
+    // Progress helpers
+    function setProgress(pct, msg) {
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('progress-status').textContent = msg;
+    }
+    function showProgress() { document.getElementById('progress-card').classList.add('show'); }
+    function hideProgress() { document.getElementById('progress-card').classList.remove('show'); }
+
+    function showError(msg) {
+        const el = document.getElementById('error-box');
+        el.textContent = msg;
+        el.classList.add('show');
+    }
+    function hideError() { document.getElementById('error-box').classList.remove('show'); }
+
+    function updateCharCount(n) {
+        const el = document.getElementById('char-count');
+        el.textContent = `${n.toLocaleString()} / 3,000 chars`;
+        el.className = 'char-count' + (n > 3000 ? ' over' : '');
+    }
+
+    async function generate() {
+        if (generating) return;
+        hideError();
+
+        const apiKey = keyInput.value.trim();
+        const topic = document.getElementById('topic').value.trim();
+        const model = document.getElementById('model').value;
+
+        if (!apiKey) return showError('Please enter your Claude API key.');
+        if (!topic) return showError('Please describe what you want to write about.');
+        if (posts.length === 0) return showError('Please upload your CSV of past posts first.');
+
+        generating = true;
+        document.getElementById('gen-btn').disabled = true;
+        document.getElementById('retry-btn').disabled = true;
+
+        showProgress();
+        setProgress(10, 'Reading your posts...');
+
+        // Use up to 30 posts — take from throughout the list for variety
+        const sample = posts.length > 30
+            ? posts.filter((_, i) => i % Math.floor(posts.length / 30) === 0).slice(0, 30)
+            : posts;
+
+        const postsBlock = sample.join('\n\n---\n\n');
+
+        setProgress(30, 'Building your voice profile...');
+
+        const system = `You are a LinkedIn ghostwriter. Your task is to write a LinkedIn post that sounds exactly like this person based on their historical posts. Study these examples carefully and mirror their tone, structure, and personality:
+
+${postsBlock}
+
+Core Voice Characteristics to identify and replicate:
+- How systematic or intuitive their thinking is; how they break down problems
+- Whether they're grounded in specifics: numbers, timeframes, concrete examples
+- Their perspective: practitioner vs. theorist, tactical vs. strategic
+- Their sentence rhythm — variation between short punchy lines and longer explanatory ones
+
+Writing Guidelines:
+- Be direct, systematic, and educational
+- Include specific numbers, timeframes, and frameworks where the topic calls for it
+- Avoid generic buzzwords, hype language, and theatrical sentence fragments
+- Use natural sentence variation — NOT machine-gun short sentences
+- Don't include any bold (no **asterisks**) or --- section separators
+
+Structure (~800-1200 words total):
+Hook — Start with a specific result, contrarian take, or framework promise (data + framework promise works best)
+Context — Set up the problem with a specific example or situation
+Framework — Deliver the core system with numbered steps and → bullets for sub-points
+Proof — Back it up with specific results, data, or additional examples
+Bottom Line — Summarize key points with > bullets
+Soft CTA — End with a low-pressure invitation (DM me, drop a comment, etc.)
+
+Formatting Rules:
+- Numbered lists for sequential steps
+- Arrow bullets (→) for non-sequential options or examples
+- Parentheticals to add voice: "(this is the part most people skip)" or "(diagnose before prescribing)"
+- Mix list types strategically
+- Use "Here's the framework:" or "Why this works:" as transitions
+
+Output:
+Return ONLY the LinkedIn post text, ready to copy and paste. Write as this person, not about them. No explanations or meta-commentary.`;
+
+        const userMsg = `Write a new LinkedIn post on this topic: ${topic}`;
+
+        setProgress(50, 'Sending to Claude...');
+
+        // Hide previous output while regenerating
+        document.getElementById('output-card').classList.remove('show');
+
+        try {
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01',
+                    'content-type': 'application/json',
+                    'anthropic-dangerous-direct-browser-access': 'true',
+                },
+                body: JSON.stringify({
+                    model,
+                    max_tokens: 1500,
+                    stream: true,
+                    system,
+                    messages: [{ role: 'user', content: userMsg }],
+                }),
+            });
+
+            if (!res.ok) {
+                let msg = `API error ${res.status}`;
+                try { const d = await res.json(); msg = d.error?.message || msg; } catch (_) {}
+                throw new Error(msg);
+            }
+
+            setProgress(65, 'Generating...');
+
+            const outputText = document.getElementById('output-text');
+            const outputCard = document.getElementById('output-card');
+            outputText.innerHTML = '';
+            outputCard.classList.add('show');
+
+            // Blinking cursor
+            const cursor = document.createElement('span');
+            cursor.className = 'cursor';
+            outputText.appendChild(cursor);
+
+            const reader = res.body.getReader();
+            const dec = new TextDecoder();
+            let buf = '';
+            let full = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buf += dec.decode(value, { stream: true });
+                const lines = buf.split('\n');
+                buf = lines.pop() ?? '';
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const raw = line.slice(6).trim();
+                    if (raw === '[DONE]') continue;
+                    try {
+                        const evt = JSON.parse(raw);
+                        if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+                            full += evt.delta.text;
+                            outputText.textContent = full;
+                            outputText.appendChild(cursor);
+                            updateCharCount(full.length);
+                            // Grow progress bar as text arrives
+                            const pct = Math.min(95, 65 + (full.length / 1400) * 30);
+                            setProgress(pct, 'Writing...');
+                        }
+                    } catch (_) {}
+                }
+            }
+
+            cursor.remove();
+            outputText.textContent = full;
+            updateCharCount(full.length);
+            setProgress(100, 'Done ✓');
+            setTimeout(hideProgress, 800);
+
+        } catch (err) {
+            hideProgress();
+            showError(err.message);
+            console.error(err);
+        } finally {
+            generating = false;
+            document.getElementById('gen-btn').disabled = false;
+            document.getElementById('retry-btn').disabled = false;
+        }
+    }
+
+    async function copyPost() {
+        const text = document.getElementById('output-text').textContent;
+        const btn = document.getElementById('copy-btn');
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (_) {
+            const ta = document.createElement('textarea');
+            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); ta.remove();
+        }
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2500);
+    }
+</script>
+</body>
+</html>
