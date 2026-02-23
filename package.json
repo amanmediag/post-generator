@@ -2,9 +2,10 @@
   "name": "post-generator",
   "version": "1.0.0",
   "scripts": {
-    "start": "serve -s . -l ${PORT:-3000}"
+    "start": "node server.js"
   },
   "dependencies": {
-    "serve": "^14.2.4"
+    "cookie-parser": "^1.4.7",
+    "express": "^4.19.2"
   }
 }
